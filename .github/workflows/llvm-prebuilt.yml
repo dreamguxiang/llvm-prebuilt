@@ -7,73 +7,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x86_64, aarch64 ]
-        os: [ windows, macos, ubuntu-20.04, ubuntu-22.04 ]
-        version: [ 14.0.6, 16.0.6 ]
+        arch: [ x86_64 ]
+        os: [ windows ]
+        version: [ 18.1.1 ]
 
         include:
-          - version: 14.0.6
-            branch: release/14.x
-          - version: 16.0.6
-            branch: release/16.x
+          - version: 18.1.1
+            branch: release/18.x
 
           - os: windows
             runner: windows-2022
-          - os: macos
-            runner: macos-latest
-          - os: ubuntu-20.04
-            runner: ubuntu-20.04
-          - os: ubuntu-22.04
-            runner: ubuntu-22.04
 
           - arch: x86_64
             os: windows
             msvc: amd64
-          - arch: aarch64
-            os: windows
-            msvc: amd64_arm64
-
-          - arch: x86_64
-            os: macos
-            osx_arch: x86_64
-          - arch: aarch64
-            os: macos
-            osx_arch: arm64
     steps:
       - name: Configure Windows runner
         if: runner.os == 'Windows'
         run: |
           choco install ninja 7zip
-
-      - name: Configure macOS runner
-        if: runner.os == 'macOS'
-        run: |
-          brew install ninja
-          echo "MACOSX_DEPLOYMENT_TARGET=10.13" >> $GITHUB_ENV
-
-      - name: Configure Linux runner
-        if: runner.os == 'Linux'
-        shell: pwsh
-        run: |
-          sudo apt update
-          sudo apt install zstd xz-utils
-          sudo apt install ninja-build
-          sudo apt install g++-aarch64-linux-gnu
-          sudo apt install libxml2-dev
-          mkdir libxml2-dev-arm64 && cd libxml2-dev-arm64
-          $LibXmlDebFile = if ($(lsb_release -rs) -eq '20.04') {
-            "libxml2-dev_2.9.10+dfsg-5ubuntu0.20.04.6_arm64.deb"
-          } else {
-            "libxml2-dev_2.9.13+dfsg-1build1_arm64.deb"
-          }
-          wget -q "http://ports.ubuntu.com/pool/main/libx/libxml2/$LibXmlDebFile"
-          ar -x "$LibXmlDebFile"
-          if (Test-Path 'data.tar.zst') {
-            tar --use-compress-program=unzstd -xf data.tar.zst
-          } else {
-            tar -xf data.tar.xz
-          }
-          sudo cp -R ./usr/lib/aarch64-linux-gnu/ /usr/lib/aarch64-linux-gnu
 
       - name: Clone project
         uses: actions/checkout@v3
@@ -86,19 +38,6 @@ jobs:
           repository: llvm/llvm-project
           ref: ${{matrix.branch}}
           path: llvm-project
-
-      - name: Patch LLVM
-        shell: pwsh
-        run: |
-          if ('${{matrix.version}}' -eq '14.0.6') {
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-14-add-lld-install-targets.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-14-add-llvm-name-prefix-to-llc-lli-opt-tools.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-14-force-disable-clang-ast-introspection.patch
-          } else {
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-add-lld-install-targets.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-add-llvm-name-prefix-to-llc-lli-opt-tools.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-force-disable-clang-ast-introspection.patch
-          }
 
       - name: Enable Windows host environment
         if: runner.os == 'Windows'
@@ -117,7 +56,7 @@ jobs:
         shell: pwsh
         run: |
           cmake --build llvm-host --target llvm-tblgen clang-tblgen llvm-config
-          if ('${{matrix.version}}' -eq '16.0.6') {
+          if ('${{matrix.version}}' -eq '18.1.1') {
             cmake --build llvm-host --target clang-tidy-confusable-chars-gen clang-pseudo-gen
           }
           $HostBinPath = "$Env:GITHUB_WORKSPACE/llvm-host/bin"
@@ -142,11 +81,6 @@ jobs:
           $CMakeInitialCache = "$Env:GITHUB_WORKSPACE/llvm-prebuilt/cmake/llvm-distribution.cmake"
 
           $CMakeArgs = @()
-
-          if ('${{matrix.os}}' -eq 'macos') {
-            $AppleArch = @{'x86_64'='x86_64';'aarch64'='arm64'}['${{matrix.arch}}']
-            $CMakeArgs += @("-DCMAKE_OSX_ARCHITECTURES=`"$AppleArch`"")
-          }
 
           cmake -G Ninja -S llvm-project/llvm -B llvm-build $CMakeArgs `
             -DCMAKE_INSTALL_PREFIX=llvm-install `
