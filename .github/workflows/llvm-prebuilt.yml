@@ -2,16 +2,18 @@ name: LLVM prebuilt
 on: workflow_dispatch
 jobs:
   build:
-    name: LLVM ${{matrix.version}} [${{matrix.arch}}-${{matrix.os}}] ${{matrix.distro}}
+    name: LLVM ${{matrix.version}} [${{matrix.arch}}-${{matrix.os}}]
     runs-on: ${{matrix.runner}}
     strategy:
       fail-fast: false
       matrix:
         arch: [ x86_64 ]
         os: [ windows ]
-        version: [ 18.1.1 ]
+        version: [16.0.6, 18.1.1 ]
 
         include:
+          - version: 16.0.6
+            branch: release/18.x
           - version: 18.1.1
             branch: release/18.x
 
@@ -42,15 +44,9 @@ jobs:
       - name: Patch LLVM
         shell: pwsh
         run: |
-          if ('${{matrix.version}}' -eq '14.0.6') {
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-14-add-lld-install-targets.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-14-add-llvm-name-prefix-to-llc-lli-opt-tools.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-14-force-disable-clang-ast-introspection.patch
-          } else {
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-add-lld-install-targets.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-add-llvm-name-prefix-to-llc-lli-opt-tools.patch
-            git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-force-disable-clang-ast-introspection.patch
-          }
+          git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-add-lld-install-targets.patch
+          git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-add-llvm-name-prefix-to-llc-lli-opt-tools.patch
+          git -C llvm-project apply ../llvm-prebuilt/patches/llvm-16-force-disable-clang-ast-introspection.patch
 
       - name: Enable Windows host environment
         if: runner.os == 'Windows'
