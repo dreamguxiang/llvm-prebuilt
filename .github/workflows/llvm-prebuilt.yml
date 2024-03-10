@@ -1,22 +1,27 @@
 name: LLVM prebuilt
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'release version'
+        required: true
+        default: '18.1.1'
+      branch:
+        description: 'release branch'
+        required: true
+        default: release/18.x
+
 jobs:
   build:
-    name: LLVM ${{matrix.version}} [${{matrix.arch}}-${{matrix.os}}]
+    name: LLVM ${{github.event.inputs.version}} [${{matrix.arch}}-${{matrix.os}}]
     runs-on: ${{matrix.runner}}
     strategy:
       fail-fast: false
       matrix:
         arch: [ x86_64 ]
         os: [ windows ]
-        version: [16.0.6, 18.1.1 ]
 
         include:
-          - version: 16.0.6
-            branch: release/18.x
-          - version: 18.1.1
-            branch: release/18.x
-
           - os: windows
             runner: windows-2022
 
@@ -34,11 +39,11 @@ jobs:
         with:
           path: llvm-prebuilt
 
-      - name: Clone LLVM ${{matrix.version}}
+      - name: Clone LLVM ${{github.event.inputs.version}}
         uses: actions/checkout@v3
         with:
           repository: llvm/llvm-project
-          ref: ${{matrix.branch}}
+          ref: ${{github.event.inputs.branch}}
           path: llvm-project
 
       - name: Patch LLVM
@@ -74,7 +79,7 @@ jobs:
           echo "LLVM_TABLEGEN=$HostBinPath/llvm-tblgen$ExeExt" >> $Env:GITHUB_ENV
           echo "CLANG_TABLEGEN=$HostBinPath/clang-tblgen$ExeExt" >> $Env:GITHUB_ENV
           echo "LLVM_CONFIG_PATH=$HostBinPath/llvm-config$ExeExt" >> $Env:GITHUB_ENV
-          echo "LLVM_VERSION=${{matrix.version}}" >> $Env:GITHUB_ENV
+          echo "LLVM_VERSION=${{github.event.inputs.version}}" >> $Env:GITHUB_ENV
 
       - name: Enable Windows target environment
         if: runner.os == 'Windows'
@@ -105,17 +110,17 @@ jobs:
       - name: Package LLVM
         if: runner.os != 'Windows'
         run: |
-          mv llvm-install clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}
-          tar -cJf clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}.tar.xz clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}
+          mv llvm-install clang+llvm-${{matrix.arch}}-${{matrix.os}}
+          tar -cJf clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar.xz clang+llvm-${{matrix.arch}}-${{matrix.os}}
 
       - name: Package LLVM
         if: runner.os == 'Windows'
         run: |
-          ren llvm-install clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}
-          cmd.exe /c "7z a -ttar -snl -so clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}.tar clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}} | 7z a -si clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}.tar.xz"
+          ren llvm-install clang+llvm-${{matrix.arch}}-${{matrix.os}}
+          cmd.exe /c "7z a -ttar -snl -so clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar clang+llvm-${{matrix.arch}}-${{matrix.os}} | 7z a -si clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar.xz"
 
       - name: Upload LLVM package
         uses: actions/upload-artifact@v3
         with:
-          name: clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}
-          path: clang+llvm-${{matrix.version}}-${{matrix.arch}}-${{matrix.os}}.tar.xz
+          name: clang+llvm-${{matrix.arch}}-${{matrix.os}}
+          path: clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar.xz
