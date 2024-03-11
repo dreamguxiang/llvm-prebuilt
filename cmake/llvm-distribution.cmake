@@ -163,7 +163,6 @@ set(LLVM_DEVELOPMENT_COMPONENTS
     cmake-exports
     llvm-headers
     llvm-libraries
-    compiler-rt-headers
     clang-headers
     clang-libraries
     clang-cmake-exports
