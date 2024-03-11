@@ -48,6 +48,7 @@ set(LLVM_TARGETS_TO_BUILD
 
 set(LLVM_ENABLE_PROJECTS
     "clang"
+    "compiler-rt"
     "clang-tools-extra"
     "llvm"
     "lld"
@@ -160,6 +161,7 @@ set(LLVM_DEVELOPMENT_COMPONENTS
     cmake-exports
     llvm-headers
     llvm-libraries
+    compiler-rt-headers
     clang-headers
     clang-libraries
     clang-cmake-exports
