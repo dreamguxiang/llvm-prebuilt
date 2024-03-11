@@ -79,6 +79,8 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "")
 
 set(LLVM_INSTALL_TOOLCHAIN_ONLY OFF CACHE BOOL "")
 
+set(COMPILER_RT_BUILD_ORC ON)
+
 set(LLVM_CCTOOLS_COMPONENTS
     llvm-lipo
     llvm-libtool-darwin
