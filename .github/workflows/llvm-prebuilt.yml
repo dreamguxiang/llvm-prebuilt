@@ -6,10 +6,6 @@ on:
         description: 'release version'
         required: true
         default: '18.1.1'
-      branch:
-        description: 'release branch'
-        required: true
-        default: release/18.x
 
 jobs:
   build:
@@ -43,7 +39,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: llvm/llvm-project
-          ref: ${{github.event.inputs.branch}}
+          ref: llvmorg-${{github.event.inputs.version}}
           path: llvm-project
 
       - name: Patch LLVM
@@ -110,17 +106,17 @@ jobs:
       - name: Package LLVM
         if: runner.os != 'Windows'
         run: |
-          mv llvm-install clang+llvm-${{matrix.arch}}-${{matrix.os}}
-          tar -cJf clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar.xz clang+llvm-${{matrix.arch}}-${{matrix.os}}
+          mv llvm-install clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}
+          tar -cJf clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}.tar.xz clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}
 
       - name: Package LLVM
         if: runner.os == 'Windows'
         run: |
-          ren llvm-install clang+llvm-${{matrix.arch}}-${{matrix.os}}
-          cmd.exe /c "7z a -ttar -snl -so clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar clang+llvm-${{matrix.arch}}-${{matrix.os}} | 7z a -si clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar.xz"
+          ren llvm-install clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}
+          cmd.exe /c "7z a -ttar -snl -so clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}.tar clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}} | 7z a -si clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}.tar.xz"
 
       - name: Upload LLVM package
         uses: actions/upload-artifact@v3
         with:
-          name: clang+llvm-${{matrix.arch}}-${{matrix.os}}
-          path: clang+llvm-${{matrix.arch}}-${{matrix.os}}.tar.xz
+          name: clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}
+          path: clang+llvm-${{github.event.inputs.version}}-${{matrix.arch}}-${{matrix.os}}.tar.xz
