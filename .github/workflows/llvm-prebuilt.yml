@@ -25,10 +25,15 @@ jobs:
             os: windows
             msvc: amd64
     steps:
+      - name: Configure build for amd64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+          
       - name: Configure Windows runner
         if: runner.os == 'Windows'
         run: |
-          choco install ninja 7zip
+          choco install 7zip
 
       - name: Clone project
         uses: actions/checkout@v3
