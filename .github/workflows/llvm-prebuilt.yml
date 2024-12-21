@@ -28,7 +28,7 @@ jobs:
       - name: Configure Windows runner
         if: runner.os == 'Windows'
         run: |
-          choco install 7zip
+          choco install 7zip ninja 
 
       - name: Clone project
         uses: actions/checkout@v3
@@ -58,7 +58,7 @@ jobs:
       - name: Configure LLVM host tools
         shell: pwsh
         run: |
-          cmake -G "Visual Studio 17 2022" -S llvm-project/llvm -B llvm-host `
+          cmake -G Ninja -S llvm-project/llvm -B llvm-host `
             -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" `
             -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_DIA_SDK=1 -Wno-dev
 
